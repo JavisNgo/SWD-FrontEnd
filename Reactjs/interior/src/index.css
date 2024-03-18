@@ -6,8 +6,30 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
+html { overflow-y:scroll; }
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+.tableDisplayContractor table{
+  border-collapse: collapse;
+  width: 100%;
+  background-color: white;
+  border-radius: 10px;
+}
+.tableDisplayContractor th, td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+.tableDisplayContractor tr:hover {background-color: rgb(196, 203, 196);}
+.tableDisplayContractor thead{
+  background-color: #db7b04;
+  color: white;
+}
+.tableDisplayContractor table th:first-child{
+  border-top-left-radius: 5px;
+}
+.tableDisplayContractor table th:last-child{
+  border-top-right-radius: 5px;
 }
