@@ -22,7 +22,7 @@ export const ProductsOfContractor = ({ contractorId }) => {
             <div className="col-lg-3 col-md-4 col-sm-6 pb-1" key={product.id}>
                 <div className="product-item bg-light mb-4">
                     <div className="product-img position-relative overflow-hidden">
-                        <img className="img-fluid w-100" style={{ width: 290, height: 290 }} src={`img/products/product-${product.id}.jpg`} alt="Image"/>
+                        <img className="img-fluid w-100" style={{ width: 290, height: 290 }} src={product.productImagesViews[0].imageUrl} alt="Image"/>
                     </div>
                     <div className="text-center py-4">
                         <a className="h6 text-decoration-none text-truncate">{product.name}</a>

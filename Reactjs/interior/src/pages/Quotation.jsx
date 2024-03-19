@@ -139,8 +139,6 @@ export const Quotation = () => {
         })
     };
 
-    console.log(productsQuantity);
-
     // Xử lý khi người dùng gửi báo giá 
     const handleSubmit = (e) => {
         e.preventDefault();

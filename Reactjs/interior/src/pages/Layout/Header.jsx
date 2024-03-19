@@ -32,6 +32,16 @@ export const Header = () => {
         setNavbarActive('Constructs')
     }
 
+    const handleSignOut = () => {
+        try {
+            localStorage.removeItem("userData");
+            navigate('/')
+            alert('You sign out')
+        } catch {
+            navigate('/Error')
+        }
+    }
+
     return (
         <>
             <div className="container-fluid">
@@ -42,7 +52,7 @@ export const Header = () => {
                             <span className="h1 text-uppercase text-dark bg-primary px-2 ml-n1">Interior</span>
                         </a>
                     </div>
-                    
+
                     <div className="col-lg-8 col-6 text-right">
                         <div className="btn-group">
                             <button type="button" className="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown">My
@@ -51,6 +61,7 @@ export const Header = () => {
                                 <div className="dropdown-menu dropdown-menu-right">
                                     <Link to="/MyInfo" className="dropdown-item" type="button">My info</Link>
                                     <Link to="/MyRequest" className="dropdown-item" type="button">My request</Link>
+                                    <a class="dropdown-item" onClick={handleSignOut}>Sign Out</a>
                                 </div>
                             ) : (
                                 <div className="dropdown-menu dropdown-menu-right">

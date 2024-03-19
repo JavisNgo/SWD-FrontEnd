@@ -26,7 +26,7 @@ function App() {
   };
   return (
     <>
-      {/* <Header /> */}
+      <Header />
       <Routes>
         <Route path='/' element={<HomePage />} />
         <Route path='/ContratorIndex' element={<ContractorIndex/>}/>
@@ -47,7 +47,7 @@ function App() {
         <Route path="/Unauthorized" element={<Unauthorized />} />
 
       </Routes>
-      {/* <Footer /> */}
+      <Footer />
     </>
 
   );

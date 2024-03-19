@@ -1,13 +1,19 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { getRequestByCustomerId } from '../api/request';
 import { getContractorById } from '../api/contractors';
 import { getCustomerByUsername } from '../api/customer';
+import { getContractByRequestId, updateContract } from '../api/contract';
+import { useNavigate } from 'react-router-dom';
 
 export const MyRequest = () => {
     // Pending Accept Complete Sign Reject
     const [customerRequests, setCutomerRequests] = useState([])
     const [filterRequests, setFilterRequests] = useState([])
     const [contractor, setContractor] = useState({})
+    const [contract, setContract] = useState()
+    let contractApi = useRef()
+    let navigate = useNavigate()
+
 
     const userDataString = localStorage.getItem('userData');
     const userData = JSON.parse(userDataString);
@@ -69,8 +75,9 @@ export const MyRequest = () => {
                         </div>
                         {request.status == 2 && (
                             <div className="col-2 pt-1">
-                                <input type="file" onChange={(e) => handleFileChange(e, request.id)} />
-                                <button type="button" className="btn btn-primary flex-grow-1">Upload Contract</button>
+                                <input type="file" onChange={(e) => handleFileChange(e)} />
+                                <button type="button" className="btn btn-primary flex-grow-1" 
+                                onClick={() => handleUploadContract(request.id)}>Upload Contract</button>
                             </div>
                         )}
                     </div>
@@ -79,18 +86,33 @@ export const MyRequest = () => {
         ))
     }
 
-    const handleFileChange = (event, requestId) => {
+    const handleFileChange = (event) => {
         const file = event.target.files[0];
+        console.log(file);
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const base64Data = reader.result.split(',')[1]; // Chỉ lấy phần base64
-                // Gọi API POST với base64Data
-                console.log(base64Data);
+                contractApi.current = base64Data
             };
             reader.readAsDataURL(file);
         }
     };
+
+    const handleUploadContract = (requestId) => {
+        const contractDataJson = {
+            "requestId": requestId,
+            "contractUrl": contractApi.current
+        }
+        getContractByRequestId(requestId)
+            .then(contractData => {
+                console.log(contractDataJson);
+                updateContract(contractData.id, contractDataJson)
+                    .then(response => navigate('/MyRequest'))
+                    .catch(err => navigate('/Error'))
+            })
+            .catch(err => console.log(err))
+    }
 
 
     return (

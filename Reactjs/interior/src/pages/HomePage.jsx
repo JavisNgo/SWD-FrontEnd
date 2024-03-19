@@ -96,7 +96,7 @@ export const HomePage = () => {
             <div key={blog.id} className="col-lg-3 col-md-4 col-sm-6 pb-1">
                 <div className="product-item bg-light mb-4">
                     <div className="product-img position-relative overflow-hidden">
-                        <img className="img-fluid w-100" style={{ width: 290, height: 290 }} src={`img/blogs/blogs (${index + 1}).jpg`} alt="Image" />
+                        <img className="img-fluid w-100" style={{ width: 290, height: 290 }} src={blog.blogImagesViews[0].imageUrl} alt="Image" />
                     </div>
                     <div className="text-center py-3 row">
                         <a className="h6 text-decoration-none col-12 text-truncate" href="#">{blog.title}</a>
