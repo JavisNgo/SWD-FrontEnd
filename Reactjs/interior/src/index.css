@@ -33,3 +33,6 @@ code {
 .tableDisplayContractor table th:last-child{
   border-top-right-radius: 5px;
 }
+.sidebarActive{
+  color: "#db7b04";
+}

@@ -14,6 +14,11 @@ import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 
 // Import the styles
 import '@react-pdf-viewer/core/lib/styles/index.css';
+import { PDFDocument } from "pdf-lib";
+import { saveAs } from "file-saver";
+import { PDFViewer } from '@react-pdf/renderer';
+import ExportPDF from "../../components/ExportPDF";
+import RequestDetail from "./RequestDetail";
 
 const ContractorIndex = () => {
     //API route---------------------------------------------------------
@@ -21,7 +26,7 @@ const ContractorIndex = () => {
     const productGetAllAPI = "https://localhost:7233/api/v1/products/get";
     const productPostAPI = "https://localhost:7233/api/v1/products/post";
     const productPutAPI = "https://localhost:7233/api/v1/products/put";
-    const productDeletaAPI = "https://localhost:7233/product";
+    const productDeletaAPI = "https://localhost:7233/api/v1/products/put/status";
 
     const comboGetAllAPI = "https://localhost:7233/api/v1/constructs/get"
     const comboPostAPI = "https://localhost:7233/api/v1/constructs/post"
@@ -35,23 +40,97 @@ const ContractorIndex = () => {
 
     const requestGetAllAPI = "https://localhost:7233/Requests"
     const requestPostAPI = "https://localhost:7233/Requests/"
+    const requestPendingToAcceptAPI = "https://localhost:7233/RequestAccepted"
+    const requestAcceptToCompleteAPI = "https://localhost:7233/IsMeeting"
 
     const customerGetAllAPI = "https://localhost:7233/api/v1/customers"
 
+    const appoinmentGetByContractorAllAPI = "https://localhost:7233/api/v1/appointments/contractor"
+
     const contractGetByContractorAPI = "https://localhost:7233/api/v1/contracts/contractor"
+
+    const depositGetAllAPI = "https://localhost:7233/api/v1/depositOrders/get"
+    const depositAcceptStatusAPI = "https://localhost:7233/api/v1/depositOrders/update"
 
     const blogGetAllAPI = "https://localhost:7233/api/v1/blogs/get"
     const blogPostAPI = "https://localhost:7233/api/v1/blogs/post"
     const blogPutAPI = "https://localhost:7233/api/v1/blogs/put"
     const blogDeleteAPI = "https://localhost:7233/api/v1/blogs/delete"
+    const ContractorId = 1;
+    // ----------------Load Data-----------
+    function loadItem() {
+        fetch(categoryGetALLAPI, {
+            method: "GET"
+        }).then((res) => {
+            return res.json();
+        }).then((data) => setCategory(data))
+            .catch(err => console.log(err))
+
+        fetch(requestGetAllAPI, {
+            method: "GET"
+        }).then((res) => {
+            return res.json();
+        }).then((data) => setRequestItem(data.filter(x => x.contractorId == ContractorId)))
+            .catch(err => console.log(err))
+
+        fetch(customerGetAllAPI, {
+            method: "GET"
+        }).then((res) => {
+            return res.json();
+        }).then((data) => setCustomerItem(data))
+            .catch(err => console.log(err))
+        fetch(depositGetAllAPI, {
+            method: "GET"
+        }).then((res) => {
+            return res.json();
+        }).then((data) => setItemDeposit(data))
+            .catch(err => console.log(err))
+
+        fetch(blogGetAllAPI, {
+            method: "GET"
+        }).then((res) => {
+            return res.json();
+        }).then((data) => setItemBlogCombo(data.filter(x => x.contractorId == ContractorId)))
+            .catch(err => console.log(err))
+        fetch(contractGetByContractorAPI + `/${contractorId}`, {
+            method: "GET"
+        }).then((res) => {
+            return res.json();
+        }).then((data) => setItemContract(data))
+            .catch(err => console.log(err))
+        fetch(appoinmentGetByContractorAllAPI + `/${contractorId}`, {
+            method: "GET"
+        }).then((res) => {
+            return res.json();
+        }).then((data) => setItemAppointment(data))
+            .catch(err => console.log(err))
+        fetch(productGetAllAPI, {
+            method: "GET"
+        }).then((res) => {
+            return res.json();
+        }).then((data) => setItem(data.filter(x => x.contractorId == ContractorId)))
+            .catch(err => console.log(err))
+
+        fetch(comboGetAllAPI, {
+            method: "GET"
+        }).then((res) => {
+            return res.json();
+        }).then((data) => setItemCombo(data.filter(x => x.contractorId == ContractorId)))
+            .catch(err => console.log(err))
+    }
+
     //Variable Declare--------------------------------------------------------
     const [contractorId, setContractorId] = useState(1);
     const defaultPlugin = defaultLayoutPlugin()
     const [item, setItem] = useState();
+    const [onreload, setOnReload] = useState(true)
     const [requestItem, setRequestItem] = useState();
     const [customerItem, setCustomerItem] = useState();
     const [itemCombo, setItemCombo] = useState();
+    const [itemAppointment, setItemAppointment] = useState()
+    const [itemDeposit, setItemDeposit] = useState()
     var inputImages = []
+    const [contractDisplay, setContractDisplay] = useState()
     const [itemBlogCombo, setItemBlogCombo] = useState();
     const [itemContract, setItemContract] = useState();
     const [handleModal, setHandleModal] = useState(false);
@@ -104,6 +183,21 @@ const ContractorIndex = () => {
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: 900,
+        height: 600,
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+        borderRadius: "10px",
+        overflowY: 'scroll',
+        display: 'block',
+    };
+    const styleCombo = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 1400,
         height: 600,
         bgcolor: 'background.paper',
         border: '2px solid #000',
@@ -260,6 +354,31 @@ const ContractorIndex = () => {
                 constructImagesViews: inputCombo.constructImagesViews.filter(x => x.imageUrl !== Url)
             })
     }
+    const MarkContract = async () => {
+        const pdfBytes = await fetch('/contract/Contract.pdf').then((response) => response.arrayBuffer());
+        const sealBytes = await fetch('/img/Stamp/InteriorStamp.png').then((response) => response.arrayBuffer());
+        const pdfDoc = await PDFDocument.load(pdfBytes);
+        const sealImage = await pdfDoc.embedPng(sealBytes);
+
+        const pages = pdfDoc.getPages();
+        const firstPage = pages[pages.length - 1]
+
+        firstPage.drawImage(sealImage, {
+            x: 400,
+            y: 100,
+            width: 100,
+            height: 100,
+        });
+
+        const pdfBytesWithSeal = await pdfDoc.save();
+        const file = new Blob([pdfBytesWithSeal]);
+        //file.type = "Microsoft Edge PDF Document"
+        //saveAs(file,"test.pdf")
+        //setContractDisplay(pdfBytesWithSeal);
+        console.log(pdfBytesWithSeal)
+        console.log(file)
+    }
+
     //SideBar Action-------------------------------------------------------------------
     const ProductSideBar = () => {
         setSideBar("PRODUCT")
@@ -379,6 +498,7 @@ const ContractorIndex = () => {
     function DetailActionMode(id) {
         if (actionMode === "") {
             setActionMode("DETAIL")
+            setHandleModal(true)
             var product
             if (item !== undefined) {
                 product = item.find(x => x.id === id);
@@ -386,6 +506,7 @@ const ContractorIndex = () => {
             setProduct(product)
         } else {
             setActionMode("")
+            setHandleModal(false)
         }
     }
     function DeleteOffAction() {
@@ -418,6 +539,20 @@ const ContractorIndex = () => {
             setProduct(product)
         } else {
             setActionMode("")
+        }
+    }
+    const DetailRequestActionMode = (id) => {
+        if (actionMode === "") {
+            setActionMode("DETAIL")
+            setHandleModal(true)
+            var product
+            if (requestItem !== undefined) {
+                product = requestItem.find(x => x.id === id);
+            }
+            setProduct(product)
+        } else {
+            setActionMode("")
+            setHandleModal(false)
         }
     }
     const EditContractActionMode = (event, id) => {
@@ -496,7 +631,7 @@ const ContractorIndex = () => {
         }
     }
 
-    //Submit form ---------------------------------------------------------------------
+    //------------------Submit form ---------------------------------------------------------------------
     const AddNewProductSubmit = (event) => {
         event.preventDefault()
         setActionMode("");
@@ -515,6 +650,8 @@ const ContractorIndex = () => {
 
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
+        setOnReload(true)
+        loadItem()
     }
     const EditProductSubmit = (event) => {
         event.preventDefault()
@@ -538,15 +675,19 @@ const ContractorIndex = () => {
 
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
     }
     const DeleteProductSubmit = () => {
 
         setActionMode("");
-        fetch(productDeletaAPI + `/${Product.id}`, {
-            method: "DELETE",
+        fetch(productDeletaAPI + `/id=${Product.id}`, {
+            method: "PUT",
         }).then((res) => {
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
     }
 
     const AddNewComboSubmit = (event) => {
@@ -567,6 +708,8 @@ const ContractorIndex = () => {
             console.log(res)
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
     }
     const EditConstructSubmit = (event) => {
         event.preventDefault()
@@ -587,7 +730,10 @@ const ContractorIndex = () => {
             console.log(res)
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
     }
+    console.log(inputCombo)
     const DeleteComboSubmit = () => {
         setActionMode("");
         fetch(comboDeleteAPI + `/id=${Product.id}`, {
@@ -595,24 +741,40 @@ const ContractorIndex = () => {
         }).then((res) => {
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
     }
 
     const AcceptProcessSubmit = () => {
         setActionMode("");
-        fetch(requestPostAPI + `${Product.id}`, {
-            method: "PUT",
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                "customerId": Product.customerId,
-                "contractorId": Product.contractorId,
-                "note": Product.note,
-                "totalPrice": Product.totalPrice,
-                "status": Product.status + 1
-            })
-        }).then((res) => {
-            console.log(res)
-        }).then((data) => console.log(data))
-            .catch(err => console.log(err))
+        if (Product.status === 0) {
+            fetch(requestPendingToAcceptAPI + `/${Product.id}`, {
+                method: "PUT",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                })
+            }).then((res) => {
+                console.log(res)
+                setOnReload(true)
+                loadItem()
+            }).then((data) => console.log(data))
+                .catch(err => console.log(err))
+        }
+        if (Product.status === 1) {
+            fetch(requestAcceptToCompleteAPI + `/${Product.id}`, {
+                method: "PUT",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                })
+            }).then((res) => {
+                setOnReload(true)
+                loadItem()
+                console.log(res)
+            }).then((data) => console.log(data))
+                .catch(err => console.log(err))
+        }
+        setOnReload(true)
+        loadItem()
     }
 
     const RejectProcessSubmit = () => {
@@ -631,6 +793,8 @@ const ContractorIndex = () => {
             console.log(res)
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
     }
 
     const AddNewCategorySubmit = (event) => {
@@ -646,6 +810,8 @@ const ContractorIndex = () => {
             console.log(res)
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
     }
 
     const EditCategorySubmit = (event) => {
@@ -667,6 +833,8 @@ const ContractorIndex = () => {
 
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
     }
     const DeleteCategorySubmit = (event) => {
         event.preventDefault()
@@ -676,6 +844,8 @@ const ContractorIndex = () => {
         }).then((res) => {
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
     }
     const AddNewBLogSubmit = (event) => {
         event.preventDefault(event)
@@ -698,6 +868,8 @@ const ContractorIndex = () => {
 
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
     }
     const EditBlogSubmit = (event) => {
         event.preventDefault(event)
@@ -719,9 +891,15 @@ const ContractorIndex = () => {
             })
         }).then((res) => {
             console.log(res)
-
-        }).then((data) => console.log(data))
+            loadItem()
+        }).then((data) => {
+            setOnReload(true)
+            loadItem()
+        }
+        )
             .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
     }
     const DeleteBlogSubmit = (event) => {
         event.preventDefault(event)
@@ -731,61 +909,89 @@ const ContractorIndex = () => {
         }).then((res) => {
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
+    }
+    const DepositSubmit = (event, id) => {
+        fetch(depositAcceptStatusAPI + `/${id}`+`?transactionCode=${Math.random()+"adsavadfs"}`, {
+            method: "PUT",
+        }).then((res) => {
+            return res.json()
+        }).then((data) => console.log(data))
+            .catch(err => console.log(err))
+            setOnReload(true)
+            loadItem()
     }
     //Fetch Data ------------------------------------------------------------------
-    useEffect(() => {
-        fetch(categoryGetALLAPI, {
-            method: "GET"
-        }).then((res) => {
-            return res.json();
-        }).then((data) => setCategory(data))
-            .catch(err => console.log(err))
+    // useEffect(() => {
+    //     fetch(categoryGetALLAPI, {
+    //         method: "GET"
+    //     }).then((res) => {
+    //         return res.json();
+    //     }).then((data) => setCategory(data))
+    //         .catch(err => console.log(err))
 
-        fetch(requestGetAllAPI, {
-            method: "GET"
-        }).then((res) => {
-            return res.json();
-        }).then((data) => setRequestItem(data))
-            .catch(err => console.log(err))
+    //     fetch(requestGetAllAPI, {
+    //         method: "GET"
+    //     }).then((res) => {
+    //         return res.json();
+    //     }).then((data) => setRequestItem(data))
+    //         .catch(err => console.log(err))
 
-        fetch(customerGetAllAPI, {
-            method: "GET"
-        }).then((res) => {
-            return res.json();
-        }).then((data) => setCustomerItem(data))
-            .catch(err => console.log(err))
+    //     fetch(customerGetAllAPI, {
+    //         method: "GET"
+    //     }).then((res) => {
+    //         return res.json();
+    //     }).then((data) => setCustomerItem(data))
+    //         .catch(err => console.log(err))
+    //     fetch(depositGetAllAPI, {
+    //         method: "GET"
+    //     }).then((res) => {
+    //         return res.json();
+    //     }).then((data) => setItemDeposit(data))
+    //         .catch(err => console.log(err))
 
-        fetch(blogGetAllAPI, {
-            method: "GET"
-        }).then((res) => {
-            return res.json();
-        }).then((data) => setItemBlogCombo(data.filter(x => x.contractorId == 1)))
-            .catch(err => console.log(err))
-        fetch(contractGetByContractorAPI + `/${contractorId}`, {
-            method: "GET"
-        }).then((res) => {
-            return res.json();
-        }).then((data) => setItemContract(data))
-            .catch(err => console.log(err))
-    }, [])
-    console.log(itemContract)
+    //     fetch(blogGetAllAPI, {
+    //         method: "GET"
+    //     }).then((res) => {
+    //         return res.json();
+    //     }).then((data) => setItemBlogCombo(data.filter(x => x.contractorId == 1)))
+    //         .catch(err => console.log(err))
+    //     fetch(contractGetByContractorAPI + `/${contractorId}`, {
+    //         method: "GET"
+    //     }).then((res) => {
+    //         return res.json();
+    //     }).then((data) => setItemContract(data))
+    //         .catch(err => console.log(err))
+    //     fetch(appoinmentGetByContractorAllAPI + `/${contractorId}`, {
+    //         method: "GET"
+    //     }).then((res) => {
+    //         return res.json();
+    //     }).then((data) => setItemAppointment(data))
+    //         .catch(err => console.log(err))
+    // }, [])
+    console.log(itemDeposit)
 
 
-    useEffect(() => {
-        fetch(productGetAllAPI, {
-            method: "GET"
-        }).then((res) => {
-            return res.json();
-        }).then((data) => setItem(data))
-            .catch(err => console.log(err))
+    if (onreload) {
+        loadItem()
+        setOnReload(false)
+    }
+    // useEffect(() => {
+    //     fetch(productGetAllAPI, {
+    //         method: "GET"
+    //     }).then((res) => {
+    //         return res.json();
+    //     }).then((data) => setItem(data))
+    //         .catch(err => console.log(err))
 
-        fetch(comboGetAllAPI, {
-            method: "GET"
-        }).then((res) => {
-            return res.json();
-        }).then((data) => setItemCombo(data))
-            .catch(err => console.log(err))
-    }, [])
+    //     fetch(comboGetAllAPI, {
+    //         method: "GET"
+    //     }).then((res) => {
+    //         return res.json();
+    //     }).then((data) => setItemCombo(data))
+    //         .catch(err => console.log(err))
+    // }, [])
 
     return (
         <div className="container-fluid position-relative bg-white d-flex p-0" >
@@ -797,13 +1003,13 @@ const ContractorIndex = () => {
                         </h3>
                     </a>
                     <div className="navbar-nav w-100" style={{ margin: "0 2%", padding: "0 3%" }}>
-                        <a href="#" className="nav-item nav-link active" style={{ color: "#db7b04", margin: "0" }} onClick={ProductSideBar}>
+                        <a href="#" className={sideBar === "PRODUCT" ? "sidebarActive" : "nav-link"} style={{ margin: "0" }} onClick={ProductSideBar}>
                             <i className="fa fa-tachometer-alt me-2" style={{ margin: "0 5%" }}></i>    Product
                         </a>
                         <div className="nav-item dropdown">
                             <a
                                 href="#"
-                                className="nav-link dropdown-toggle"
+                                className={sideBar === "CONSTRUCTIONPROCESS" ? "sidebarActive" : "nav-link"}
                                 data-bs-toggle="dropdown"
                                 style={{ margin: "1% 0" }}
                                 onClick={ConstructionProcessSibar}
@@ -811,23 +1017,23 @@ const ContractorIndex = () => {
                                 <i className="fa fa-laptop me-2" style={{ margin: "0 5%" }}></i>    Construction process
                             </a>
                         </div>
-                        <a href="#" className="nav-item nav-link" style={{ margin: "1% 0" }}
+                        <a href="#" className={sideBar === "CATEGORY" ? "sidebarActive" : "nav-link"} style={{ margin: "1% 0" }}
                             onClick={CategorySideBar}>
                             <i className="fa fa-keyboard me-2" style={{ margin: "0 5%" }}></i>    Category
                         </a>
-                        <a href="#" className="nav-item nav-link" style={{ margin: "1% 0" }}
+                        <a href="#" className={sideBar === "COMBO" ? "sidebarActive" : "nav-link"} style={{ margin: "1% 0" }}
                             onClick={ComboSideBar}>
                             <i className="fa fa-th me-2" style={{ margin: "0 5%" }}></i>    Combos
                         </a>
-                        <a href="#" className="nav-item nav-link" style={{ margin: "1% 0" }}
+                        <a href="#" className={sideBar === "BLOG" ? "sidebarActive" : "nav-link"} style={{ margin: "1% 0" }}
                             onClick={BlogSideBar}>
                             <i className="fa fa-keyboard me-2" style={{ margin: "0 5%" }}></i>    Blog
                         </a>
-                        <a href="#" className="nav-item nav-link" style={{ margin: "1% 0" }}
+                        <a href="#" className={sideBar === "CONTRACT" ? "sidebarActive" : "nav-link"} style={{ margin: "1% 0" }}
                             onClick={ContractSideBar}>
                             <i className="fa fa-table me-2" style={{ margin: "0 5%" }}></i>    Contract
                         </a>
-                        <a href="#" className="nav-item nav-link" style={{ margin: "1% 0" }}
+                        <a href="#" className={sideBar === "DASHBOARD" ? "sidebarActive" : "nav-link"} style={{ margin: "1% 0" }}
                             onClick={DashboardSideBar}>
                             <i className="fa fa-table me-2" style={{ margin: "0 5%" }}></i>    Dashboard
                         </a>
@@ -856,8 +1062,13 @@ const ContractorIndex = () => {
                             <>
                                 <div className="tableDisplayContractor">
                                     <div style={{ display: "flex" }}>
+                                        {/* <div style={{height:"700px"}}>
+                                        <PDFViewer style={{    width: "1000px", height:"800px"}}><ExportPDF/></PDFViewer>
+                                        </div> */}
+
                                         <div>
                                             <h2 style={{ color: "#db7b04" }}>Product</h2>
+
                                         </div>
                                         <div style={{ marginLeft: "80%" }}>
                                             <Button style={{ backgroundColor: "#db7b04", color: "white" }} onClick={AddActionMode}>Add new</Button>
@@ -904,7 +1115,7 @@ const ContractorIndex = () => {
                                             : <></>
                                     }
 
-                                    <table style={{ marginTop: "" }}>
+                                    <table style={{ marginTop: "1%" }}>
                                         <thead>
                                             <th>#</th>
                                             <th>Name</th>
@@ -926,7 +1137,7 @@ const ContractorIndex = () => {
                                                             {/* {product.productImagesViews? product.productImagesViews[0].imageUrl : ""} */}
                                                             <img src={product.productImagesViews ? product.productImagesViews[0].imageUrl : ""} alt="ProductImage" width={100} />
                                                         </td>
-                                                        <td>{product.status}</td>
+                                                        <td>{product.status?<>Active</>:<>Unactive</>}</td>
                                                         <td><div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => EditActionMode(product.id)}>Edit</a> |</div>
 
                                                             <div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => DeleteActionMode(product.id)}>Delete</a> |</div>
@@ -1171,7 +1382,7 @@ const ContractorIndex = () => {
                                                                                     </div>
                                                                                     <div class="mb-3">
                                                                                         <label htmlFor="exampleInputPassword1" class="form-label">Price</label>
-                                                                                        <input type="number" step={0.01} class="form-control" id="exampleInputPassword1" name="price" placeholder={product.estimatedPrice} onChange={OnFormComboChange} />
+                                                                                        <input type="number" step={0.01} class="form-control" id="exampleInputPassword1" name="estimatedPrice" min={0} placeholder={product.estimatedPrice} onChange={OnFormComboChange} />
                                                                                     </div>
                                                                                     <div class="mb-3">
                                                                                         <label htmlFor="exampleInputPassword1" class="form-label">Add Images</label>
@@ -1191,6 +1402,17 @@ const ContractorIndex = () => {
                                                             <>
 
                                                                 <ComboDetail id={product.id} />
+                                                                <Modal
+                                                                    open={handleModal}
+                                                                    onClose={AddActionMode}
+                                                                    aria-labelledby="modal-modal-title"
+                                                                    aria-describedby="modal-modal-description"
+                                                                >
+                                                                    <Box sx={styleCombo}>
+                                                                        <h2>Construct Detail</h2>
+                                                                        <ComboDetail id={product.id} />
+                                                                    </Box>
+                                                                </Modal>
                                                             </>
                                                             : <></>
                                                     }
@@ -1255,11 +1477,45 @@ const ContractorIndex = () => {
                                                                 <td><input type="datetime-local" value={product.timeIn.substring(0, 16)} disabled /></td>
                                                                 <td><input type="datetime-local" value={product.timeOut.substring(0, 16)} disabled /></td>
                                                                 <td>{product.status}</td>
-                                                                <td><div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => AcceptActionMode(product.id)}>Accept</a> |</div>
+                                                                <td><div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => AcceptActionMode(product.id, product.status)}>Accept</a> |</div>
                                                                     <div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => DenyActionMode(product.id)}>Reject</a> |</div>
-                                                                    <div><a href="#!" style={{ color: "#04AA6D" }} >Detail</a> |</div>
+                                                                    <div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => DetailRequestActionMode(product.id)}>Detail</a> |</div>
                                                                 </td>
                                                             </tr>
+                                                            {itemAppointment.find(x => x.requestId == product.id) ? <>
+                                                                <tr>
+                                                                    <td colSpan={4}></td>
+                                                                    <td style={{ color: "green" }}>Appointment at:</td>
+                                                                    <td><input type="datetime-local" readOnly value={itemAppointment.find(x => x.requestId == product.id) ?
+                                                                        itemAppointment.find(x => x.requestId == product.id).meetingDate.substring(0, 16) : null} /></td>
+                                                                    <td>{itemAppointment.find(x => x.requestId == product.id).status === 1 ? <>Complete</> : <>Pending</>
+                                                                    }</td>
+                                                                </tr>
+                                                            </> :
+                                                                <></>
+                                                            }
+                                                            {product.status === 2 ? <>
+                                                                <tr>
+                                                                    <td colSpan={4}></td>
+                                                                    <td style={{ color: "green" }}>Deposit:</td>
+                                                                    <td><input type="text" name="transactionCode" placeholder="Transaction Code"/></td>
+                                                                    <td>{itemDeposit.find(x => x.requestId == product.id).status === 1 ? <>Processing</> : itemDeposit.find(x => x.requestId == product.id).status === 2 ? <>Complete</> : <p style={{color: "red"}}>Pending</p>
+                                                                    }</td>
+                                                                    <td><a style={{ color: "red" }} href="#!" value="Mark as deposit" onClick={(event) => DepositSubmit(event, itemDeposit.find(x => x.requestId == product.id).id)}>Deposited</a></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td colSpan={4}></td>
+                                                                    <td style={{ color: "green" }}>Contract:</td>
+                                                                    {/* <td><input type="datetime-local" readOnly value={itemAppointment.find(x=>x.requestId == product.id).meetingDate?
+                                                                itemAppointment.find(x=>x.requestId == product.id).meetingDate.substring(0, 16):null}/></td> */}
+                                                                    <td><Button style={{ color: "green" }}>ContractDetail</Button></td>
+                                                                    <td>{itemAppointment.find(x => x.requestId == product.id).status === 1 ? <>Complete</> : <>Pending</>
+                                                                    }</td>
+                                                                    <td><a style={{ color: "red" }} href="#!" onClick={MarkContract}>Mark Contract</a></td>
+                                                                </tr>
+                                                            </> :
+                                                                <></>
+                                                            }
                                                         </> : <></>
                                                     }
 
@@ -1272,9 +1528,25 @@ const ContractorIndex = () => {
                                                                         <Button onClick={AcceptProcessSubmit}>Yes</Button>
                                                                     </td>
                                                                     <td colSpan={2}>
-                                                                        <Button style={{ color: "red" }}>No</Button>
+                                                                        <Button style={{ color: "red" }} onClick={() => DeleteOffAction()}>No</Button>
                                                                     </td>
                                                                 </tr>
+                                                            </> : <></>
+                                                    }
+                                                    {
+                                                        actionMode === "DETAIL" && Product.id === product.id ?
+                                                            <>
+                                                                <RequestDetail id={product.id} />
+                                                                <Modal
+                                                                    open={handleModal}
+                                                                    onClose={AddActionMode}
+                                                                    aria-labelledby="modal-modal-title"
+                                                                    aria-describedby="modal-modal-description"
+                                                                >
+                                                                    <Box sx={styleCombo}>
+                                                                        <RequestDetail id={product.id} />
+                                                                    </Box>
+                                                                </Modal>
                                                             </> : <></>
                                                     }
                                                     {
@@ -1286,7 +1558,7 @@ const ContractorIndex = () => {
                                                                         <Button onClick={RejectProcessSubmit}>Yes</Button>
                                                                     </td>
                                                                     <td colSpan={2}>
-                                                                        <Button style={{ color: "red" }}>No</Button>
+                                                                        <Button style={{ color: "red" }} onClick={() => DeleteOffAction()}>No</Button>
                                                                     </td>
                                                                 </tr>
                                                             </> : <></>
@@ -1423,37 +1695,37 @@ const ContractorIndex = () => {
                                     {
                                         actionMode === "ADD" ?
                                             <Modal
-                                            open={handleModal}
-                                            onClose={AddActionMode}
-                                            aria-labelledby="modal-modal-title"
-                                            aria-describedby="modal-modal-description"
-                                        >
-                                            <Box sx={style}>
-                                            <div class="">
-                                                <div class="bg-light rounded h-100 p-4">
-                                                    <h6 class="mb-4">Add Blog</h6>
-                                                    <form onSubmit={AddNewBLogSubmit}>
-                                                        <div class="mb-3">
-                                                            <label htmlFor="exampleInputEmail1" class="form-label">Title</label>
-                                                            <input type="text" class="form-control" id="exampleInputEmail1"
-                                                                aria-describedby="emailHelp" name="title" onChange={OnFormBlogChange} />
+                                                open={handleModal}
+                                                onClose={AddActionMode}
+                                                aria-labelledby="modal-modal-title"
+                                                aria-describedby="modal-modal-description"
+                                            >
+                                                <Box sx={style}>
+                                                    <div class="">
+                                                        <div class="bg-light rounded h-100 p-4">
+                                                            <h6 class="mb-4">Add Blog</h6>
+                                                            <form onSubmit={AddNewBLogSubmit}>
+                                                                <div class="mb-3">
+                                                                    <label htmlFor="exampleInputEmail1" class="form-label">Title</label>
+                                                                    <input type="text" class="form-control" id="exampleInputEmail1"
+                                                                        aria-describedby="emailHelp" name="title" onChange={OnFormBlogChange} />
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label htmlFor="exampleInputEmail1" class="form-label">Content</label>
+                                                                    <textarea type="text" class="form-control" id="exampleInputEmail1" cols={10} rows={5}
+                                                                        aria-describedby="emailHelp" name="content" onChange={OnFormBlogChange} />
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label htmlFor="exampleInputEmail1" class="form-label">Add Images</label>
+                                                                    <input type="file" class="form-control" id="exampleInputEmail1"
+                                                                        aria-describedby="emailHelp" accept="image/*" name="imageFile" multiple onChange={OnFormBlogChange} />
+                                                                </div>
+                                                                <Button type="submit" class="btn btn-primary">Add new Blog</Button>
+                                                            </form>
                                                         </div>
-                                                        <div class="mb-3">
-                                                            <label htmlFor="exampleInputEmail1" class="form-label">Content</label>
-                                                            <textarea type="text" class="form-control" id="exampleInputEmail1" cols={10} rows={5}
-                                                                aria-describedby="emailHelp" name="content" onChange={OnFormBlogChange} />
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label htmlFor="exampleInputEmail1" class="form-label">Add Images</label>
-                                                            <input type="file" class="form-control" id="exampleInputEmail1"
-                                                                aria-describedby="emailHelp" accept="image/*" name="imageFile" multiple onChange={OnFormBlogChange} />
-                                                        </div>
-                                                        <Button type="submit" class="btn btn-primary">Add new Blog</Button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                            </Box>
-                                        </Modal>
+                                                    </div>
+                                                </Box>
+                                            </Modal>
                                             : <></>
                                     }
 
@@ -1581,7 +1853,9 @@ const ContractorIndex = () => {
                                             <h2 style={{ color: "#db7b04" }}>Contract</h2>
                                         </div>
                                         <div style={{ marginLeft: "85%" }}>
+
                                             {/* <Button style={{ backgroundColor: "#db7b04", color: "white" }} onClick={AddActionMode}>Add new</Button> */}
+
                                         </div>
                                     </div>
                                     {/* -------------Add form---------------- */}
