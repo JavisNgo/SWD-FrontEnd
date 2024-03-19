@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ConstructsOfContractor } from './ConstructsOfContractor';
 import { ProductsOfContractor } from './ProductsOfContractor';
 
 export const ContractorDetail = () => {
   const [navbarActive, setNavbarActive] = useState('Constructs');
   const [contractor, setContractor] = useState({});
+  const navigate = useNavigate()
   const location = useLocation();
   const contractorIdRef = useRef(location.state ? location.state.contractorId : null);
 
@@ -31,7 +32,9 @@ export const ContractorDetail = () => {
         return null;
     }
   };
-
+  const GoQuoation = () =>{
+    navigate("/Quotation")
+  }
   const RenderContractorInfo = () => (
     <div className="container-fluid mb-30">
       <div className="row d-flex justify-content-center align-items-center">
@@ -54,7 +57,7 @@ export const ContractorDetail = () => {
                     </div>
                   </div>
                   <div className="d-flex pt-1">
-                    <button type="button" className="btn btn-primary flex-grow-1">Quotation</button>
+                    <button type="button" onClick={GoQuoation} className="btn btn-primary flex-grow-1">Quotation</button>
                   </div>
                 </div>
               </div>

@@ -108,8 +108,9 @@ export const MyRequest = () => {
             .then(contractData => {
                 console.log(contractDataJson);
                 updateContract(contractData.id, contractDataJson)
-                    .then(response => navigate('/MyRequest'))
+                    .then(response => navigate(0))
                     .catch(err => navigate('/Error'))
+                    
             })
             .catch(err => console.log(err))
     }

@@ -19,6 +19,7 @@ import { saveAs } from "file-saver";
 import { PDFViewer } from '@react-pdf/renderer';
 import ExportPDF from "../../components/ExportPDF";
 import RequestDetail from "./RequestDetail";
+import { useNavigate } from "react-router";
 
 const ContractorIndex = () => {
     //API route---------------------------------------------------------
@@ -42,6 +43,7 @@ const ContractorIndex = () => {
     const requestPostAPI = "https://localhost:7233/Requests/"
     const requestPendingToAcceptAPI = "https://localhost:7233/RequestAccepted"
     const requestAcceptToCompleteAPI = "https://localhost:7233/IsMeeting"
+    const requestCompleteToSignAPI = "https://localhost:7233/Contracts/contractor"
 
     const customerGetAllAPI = "https://localhost:7233/api/v1/customers"
 
@@ -122,6 +124,7 @@ const ContractorIndex = () => {
     //Variable Declare--------------------------------------------------------
     const [contractorId, setContractorId] = useState(1);
     const defaultPlugin = defaultLayoutPlugin()
+    const navigate = useNavigate()
     const [item, setItem] = useState();
     const [onreload, setOnReload] = useState(true)
     const [requestItem, setRequestItem] = useState();
@@ -373,10 +376,8 @@ const ContractorIndex = () => {
         const pdfBytesWithSeal = await pdfDoc.save();
         const file = new Blob([pdfBytesWithSeal]);
         //file.type = "Microsoft Edge PDF Document"
-        //saveAs(file,"test.pdf")
+        saveAs(file,"Contract_sign.pdf")
         //setContractDisplay(pdfBytesWithSeal);
-        console.log(pdfBytesWithSeal)
-        console.log(file)
     }
 
     //SideBar Action-------------------------------------------------------------------
@@ -414,6 +415,10 @@ const ContractorIndex = () => {
         setSideBar("DASHBOARD")
         setActionMode("")
         setPage(1)
+    }
+    const LogoutFunction = ()=>{
+        localStorage.clear()
+        navigate("/")
     }
     //Action Mode ---------------------------------------------------------------------
     const AddActionMode = () => {
@@ -569,6 +574,7 @@ const ContractorIndex = () => {
             setHandleModal(false)
         }
     }
+
     const ChangePage = (event, value) => {
         setPage(value)
         setActionMode("")
@@ -733,7 +739,7 @@ const ContractorIndex = () => {
             setOnReload(true)
             loadItem()
     }
-    console.log(inputCombo)
+    console.log(itemContract)
     const DeleteComboSubmit = () => {
         setActionMode("");
         fetch(comboDeleteAPI + `/id=${Product.id}`, {
@@ -745,7 +751,7 @@ const ContractorIndex = () => {
             loadItem()
     }
 
-    const AcceptProcessSubmit = () => {
+    const AcceptProcessSubmit =  async() => {
         setActionMode("");
         if (Product.status === 0) {
             fetch(requestPendingToAcceptAPI + `/${Product.id}`, {
@@ -757,7 +763,10 @@ const ContractorIndex = () => {
                 console.log(res)
                 setOnReload(true)
                 loadItem()
-            }).then((data) => console.log(data))
+                alert(res)
+            }).then((data) => {console.log(data)
+                alert(data)
+            })
                 .catch(err => console.log(err))
         }
         if (Product.status === 1) {
@@ -770,13 +779,61 @@ const ContractorIndex = () => {
                 setOnReload(true)
                 loadItem()
                 console.log(res)
-            }).then((data) => console.log(data))
+                alert(res)
+            }).then((data) => {console.log(data)
+                alert(data)
+            })
+                .catch(err => console.log(err))
+        }
+        if (Product.status === 2) {
+            const pdfBytes = await fetch("/contract/contract1.pdf").then((response) => response.arrayBuffer());
+        const sealBytes = await fetch('/img/Stamp/InteriorStamp.png').then((response) => response.arrayBuffer());
+        const pdfDoc = await PDFDocument.load(pdfBytes);
+        const sealImage = await pdfDoc.embedPng(sealBytes);
+
+        const pages = pdfDoc.getPages();
+        const firstPage = pages[pages.length - 1]
+
+        firstPage.drawImage(sealImage, {
+            x: 350,
+            y: 650,
+            width: 100,
+            height: 100,
+        });
+
+        const pdfBytesWithSeal = await pdfDoc.save();
+        const file = new Blob([pdfBytesWithSeal]);
+        //file.type = "Microsoft Edge PDF Document"
+        saveAs(file,"Contract_sign.pdf")
+        let data = ''
+                await getBase64(file)
+                    .then(res => {
+                        data = res
+                        console.log(res)
+                    })
+                    .catch(err => console.log(err))
+                
+            
+            fetch(requestCompleteToSignAPI + `/${itemContract.find(x=> x.requestId == Product.id).id}`, {
+                method: "PUT",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    "requestId": itemContract.find(x=> x.requestId == Product.id).requestId,
+                    "contractUrl": data.slice(data.indexOf("base64,") + "base64,".length, data.length),
+                })
+            }).then((res) => {
+                setOnReload(true)
+                loadItem()
+                console.log(res)
+                
+            }).then((data) => {console.log(data)
+                alert(data)
+            })
                 .catch(err => console.log(err))
         }
         setOnReload(true)
         loadItem()
     }
-
     const RejectProcessSubmit = () => {
         setActionMode("");
         fetch(requestPostAPI + `${Product.id}`, {
@@ -787,10 +844,20 @@ const ContractorIndex = () => {
                 "contractorId": Product.contractorId,
                 "note": Product.note,
                 "totalPrice": Product.totalPrice,
-                "status": 4
+                "status": 5,
+                "requestDetailViews": [
+                    {
+                      "requestId": 1,
+                      "productId": 1,
+                      "quantity": 1,
+                      
+                    }
+                  ]
             })
         }).then((res) => {
             console.log(res)
+            setOnReload(true)
+            loadItem()
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
             setOnReload(true)
@@ -808,6 +875,8 @@ const ContractorIndex = () => {
             })
         }).then((res) => {
             console.log(res)
+            setOnReload(true)
+            loadItem()
         }).then((data) => console.log(data))
             .catch(err => console.log(err))
             setOnReload(true)
@@ -1038,7 +1107,7 @@ const ContractorIndex = () => {
                             <i className="fa fa-table me-2" style={{ margin: "0 5%" }}></i>    Dashboard
                         </a>
                         <a href="#" className="nav-item nav-link" style={{ margin: "1% 0" }}
-                            onClick={DashboardSideBar}>
+                            onClick={LogoutFunction}>
                             <i className="fa fa-table me-2" style={{ margin: "0 5%" }}></i>    Logout
                         </a>
                     </div>
@@ -1100,7 +1169,7 @@ const ContractorIndex = () => {
                                                                 </div>
                                                                 <div class="mb-3">
                                                                     <label htmlFor="exampleInputPassword1" class="form-label">Price</label>
-                                                                    <input type="number" step={0.01} class="form-control" id="exampleInputPassword1" name="price" required onChange={OnFormChange} />
+                                                                    <input type="number" step={1} class="form-control" id="exampleInputPassword1" min={0} name="price" required onChange={OnFormChange} />
                                                                 </div>
                                                                 <div class="mb-3">
                                                                     <label htmlFor="exampleInputPassword1" class="form-label">ProductImages</label>
@@ -1168,7 +1237,7 @@ const ContractorIndex = () => {
                                                                                     </div>
                                                                                     <div class="mb-3">
                                                                                         <label htmlFor="exampleInputPassword1" class="form-label">Price</label>
-                                                                                        <input type="number" step={0.01} class="form-control" id="exampleInputPassword1" name="price" placeholder={product.price} onChange={OnFormChange} />
+                                                                                        <input type="number" step={1} class="form-control" id="exampleInputPassword1" min={0} name="price" placeholder={product.price} onChange={OnFormChange} />
                                                                                     </div>
                                                                                     <div class="mb-3">
                                                                                         <label htmlFor="exampleInputPassword1" class="form-label">Product Images</label>
@@ -1264,15 +1333,15 @@ const ContractorIndex = () => {
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label htmlFor="exampleInputPassword1" class="form-label">Name</label>
-                                                                        <input type="text" step={0.01} class="form-control" id="exampleInputPassword1" name="name" required onChange={OnFormComboChange} />
+                                                                        <input type="text"  class="form-control" id="exampleInputPassword1" name="name" required onChange={OnFormComboChange} />
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label htmlFor="exampleInputPassword1" class="form-label">Description</label>
-                                                                        <input type="text" step={0.01} class="form-control" id="exampleInputPassword1" name="description" required onChange={OnFormComboChange} />
+                                                                        <input type="text"  class="form-control" id="exampleInputPassword1" name="description" required onChange={OnFormComboChange} />
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label htmlFor="exampleInputPassword1" class="form-label">Price</label>
-                                                                        <input type="number" step={0.01} class="form-control" min={0} id="exampleInputPassword1" name="estimatedPrice" required onChange={OnFormComboChange} />
+                                                                        <input type="number" step={1} class="form-control" min={0} id="exampleInputPassword1" name="estimatedPrice" required onChange={OnFormComboChange} />
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label htmlFor="exampleInputPassword1" class="form-label">ProductImages</label>
@@ -1382,7 +1451,7 @@ const ContractorIndex = () => {
                                                                                     </div>
                                                                                     <div class="mb-3">
                                                                                         <label htmlFor="exampleInputPassword1" class="form-label">Price</label>
-                                                                                        <input type="number" step={0.01} class="form-control" id="exampleInputPassword1" name="estimatedPrice" min={0} placeholder={product.estimatedPrice} onChange={OnFormComboChange} />
+                                                                                        <input type="number" step={1} min={0} class="form-control" id="exampleInputPassword1" name="estimatedPrice" placeholder={product.estimatedPrice} onChange={OnFormComboChange} />
                                                                                     </div>
                                                                                     <div class="mb-3">
                                                                                         <label htmlFor="exampleInputPassword1" class="form-label">Add Images</label>
@@ -1448,7 +1517,10 @@ const ContractorIndex = () => {
                                             <Tab value={3} label="Signed" onClick={() => ChangeProcessStatus(3)}>
 
                                             </Tab>
-                                            <Tab value={4} label="Rejected" onClick={() => ChangeProcessStatus(4)}>
+                                            <Tab value={4} label="Deposited" onClick={() => ChangeProcessStatus(4)}>
+
+                                            </Tab>
+                                            <Tab value={5} label="Rejected" onClick={() => ChangeProcessStatus(5)}>
 
                                             </Tab>
                                         </Tabs>
@@ -1477,10 +1549,17 @@ const ContractorIndex = () => {
                                                                 <td><input type="datetime-local" value={product.timeIn.substring(0, 16)} disabled /></td>
                                                                 <td><input type="datetime-local" value={product.timeOut.substring(0, 16)} disabled /></td>
                                                                 <td>{product.status}</td>
-                                                                <td><div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => AcceptActionMode(product.id, product.status)}>Accept</a> |</div>
+                                                                {
+                                                                    product.status === 5 ?<><div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => DetailRequestActionMode(product.id)}>Detail</a> |</div></>:<>
+                                                                    <td>{product.status === 3 || product.status === 4 ?<></>:<div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => AcceptActionMode(product.id, product.status)}>Accept</a> |</div>
+                                                                    }
+                                                                    {/* <div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => AcceptActionMode(product.id, product.status)}>Accept</a> |</div> */}
                                                                     <div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => DenyActionMode(product.id)}>Reject</a> |</div>
                                                                     <div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => DetailRequestActionMode(product.id)}>Detail</a> |</div>
                                                                 </td>
+                                                                    </>
+                                                                }
+                                                                
                                                             </tr>
                                                             {itemAppointment.find(x => x.requestId == product.id) ? <>
                                                                 <tr>
@@ -1488,8 +1567,22 @@ const ContractorIndex = () => {
                                                                     <td style={{ color: "green" }}>Appointment at:</td>
                                                                     <td><input type="datetime-local" readOnly value={itemAppointment.find(x => x.requestId == product.id) ?
                                                                         itemAppointment.find(x => x.requestId == product.id).meetingDate.substring(0, 16) : null} /></td>
-                                                                    <td>{itemAppointment.find(x => x.requestId == product.id).status === 1 ? <>Complete</> : <>Pending</>
+                                                                    <td>{itemAppointment.find(x => x.requestId == product.id).status === 1 ? <>Complete</> :itemAppointment.find(x => x.requestId == product.id).status === 2 ? <>Signed</>:<>Pending</>
                                                                     }</td>
+                                                                </tr>
+                                                            </> :
+                                                                <></>
+                                                            }
+                                                            {product.status === 3 ||product.status === 4 ? <>
+                                                                <tr>
+                                                                    <td colSpan={4}></td>
+                                                                    <td style={{ color: "green" }}>Deposit:</td>
+                                                                    <td><input type="text" name="transactionCode" placeholder="Transaction Code"/></td>
+                                                                    <td>{itemDeposit.find(x => x.requestId == product.id).status === 1 ? <>Complete</> : itemDeposit.find(x => x.requestId == product.id).status === 2 ? <>Complete</> : <p style={{color: "red"}}>Pending</p>
+                                                                    }</td>
+                                                                    {itemDeposit.find(x => x.requestId == product.id).status === 1 ?
+                                                                    <></>
+                                                                    :<><td><a style={{ color: "red" }} href="#!" value="Mark as deposit" onClick={(event) => DepositSubmit(event, itemDeposit.find(x => x.requestId == product.id).id)}>Deposit</a></td></>}
                                                                 </tr>
                                                             </> :
                                                                 <></>
@@ -1497,21 +1590,16 @@ const ContractorIndex = () => {
                                                             {product.status === 2 ? <>
                                                                 <tr>
                                                                     <td colSpan={4}></td>
-                                                                    <td style={{ color: "green" }}>Deposit:</td>
-                                                                    <td><input type="text" name="transactionCode" placeholder="Transaction Code"/></td>
-                                                                    <td>{itemDeposit.find(x => x.requestId == product.id).status === 1 ? <>Processing</> : itemDeposit.find(x => x.requestId == product.id).status === 2 ? <>Complete</> : <p style={{color: "red"}}>Pending</p>
-                                                                    }</td>
-                                                                    <td><a style={{ color: "red" }} href="#!" value="Mark as deposit" onClick={(event) => DepositSubmit(event, itemDeposit.find(x => x.requestId == product.id).id)}>Deposited</a></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td colSpan={4}></td>
                                                                     <td style={{ color: "green" }}>Contract:</td>
                                                                     {/* <td><input type="datetime-local" readOnly value={itemAppointment.find(x=>x.requestId == product.id).meetingDate?
                                                                 itemAppointment.find(x=>x.requestId == product.id).meetingDate.substring(0, 16):null}/></td> */}
-                                                                    <td><Button style={{ color: "green" }}>ContractDetail</Button></td>
-                                                                    <td>{itemAppointment.find(x => x.requestId == product.id).status === 1 ? <>Complete</> : <>Pending</>
+                                                                    <td><a href={itemContract.find(x => x.requestId == product.id)?itemContract.find(x => x.requestId == product.id).contractUrl:"#"} target="_blank" style={{ color: "green" }}>ContractDetail</a></td>
+                                                                    <td>{itemContract.find(x => x.requestId == product.id)?<>{itemContract.find(x => x.requestId == product.id).uploadDate ? <>Complete</> : <p style={{color:"red"}}>Pending</p>}
+                                                                    
+                                                                    </>:<></>
+                                                                    
                                                                     }</td>
-                                                                    <td><a style={{ color: "red" }} href="#!" onClick={MarkContract}>Mark Contract</a></td>
+                                                                
                                                                 </tr>
                                                             </> :
                                                                 <></>
@@ -1545,6 +1633,22 @@ const ContractorIndex = () => {
                                                                 >
                                                                     <Box sx={styleCombo}>
                                                                         <RequestDetail id={product.id} />
+                                                                    </Box>
+                                                                </Modal>
+                                                            </> : <></>
+                                                    }
+                                                    {
+                                                        actionMode === "CONTRACTDETAIL" && Product?
+                                                            <>
+                                                                <RequestDetail id={product.id} />
+                                                                <Modal
+                                                                    open={handleModal}
+                                                                    onClose={AddActionMode}
+                                                                    aria-labelledby="modal-modal-title"
+                                                                    aria-describedby="modal-modal-description"
+                                                                >
+                                                                    <Box sx={styleCombo}>
+                                                                        {Product.id}
                                                                     </Box>
                                                                 </Modal>
                                                             </> : <></>
@@ -1905,7 +2009,7 @@ const ContractorIndex = () => {
                                                         <td><input type="datetime-local" value={product.uploadDate ? product.uploadDate.substring(0, 16) : null} disabled /></td>
                                                         <td></td>
                                                         <td>{product.status === true ? <>Active</> : <>Unactive</>}</td>
-                                                        <td><div><a href="#!" style={{ color: "#04AA6D" }} onClick={() => EditContractActionMode(product.code)}>Detail</a> |</div>
+                                                        <td><div><a href="#!"style={{ color: "#04AA6D" }} onClick={(event) => EditContractActionMode(event,product.id)}>Detail</a> |</div>
                                                         </td>
                                                     </tr>
 
@@ -1941,11 +2045,17 @@ const ContractorIndex = () => {
                                                             border: '1px solid rgba(0, 0, 0, 0.3)',
                                                             height: '500px',
                                                         }}>
-                                                            <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
-                                                                <Viewer fileUrl="/contract/Contract.pdf" plugins={[defaultPlugin]} withCredentials={true} defaultScale={SpecialZoomLevel.ActualSize} theme={{
+                                                            {/* <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
+                                                                <Viewer fileUrl="/contract/contract1.pdf" plugins={[defaultPlugin]}
+                                                                withCredentials={true}
+                                                                httpHeaders={{
+                                                                    "origin":["https://localhost:3000"],
+                                                                }}
+                                                                defaultScale={SpecialZoomLevel.ActualSize} theme={{
                                                                     theme: 'dark',
                                                                 }} />
-                                                            </Worker>
+                                                            </Worker> */}
+                                                            <iframe width="100%" height="100%" allowFullScreen  src={Product.contractUrl}/>
 
                                                         </div>
                                                     </Box>

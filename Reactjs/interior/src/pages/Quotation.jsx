@@ -4,12 +4,31 @@ import { getProductsByContractorId } from '../api/products';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { postRequest } from '../api/request';
 import { getCustomerByUsername } from '../api/customer';
+import { Box, Modal } from '@mui/material';
+import { PDFDownloadLink, PDFViewer } from '@react-pdf/renderer';
+import ExportPDF from '../components/ExportPDF';
 
 export const Quotation = () => {
     const location = useLocation()
     const { state } = location
     const navigate = useNavigate()
-
+    const downloadPdf = useRef()
+    const [openContractView, setOpenContractView] = useState(false);
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 1100,
+        height: 600,
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+        borderRadius: "10px",
+        overflowY: 'scroll',
+        display: 'block',
+    };
     const [contractor, setContractor] = useState({});
     const [contractors, setContractors] = useState([]);
     const [products, setProducts] = useState([]);
@@ -93,7 +112,15 @@ export const Quotation = () => {
         const selectedProduct = products.find(product => product.id == productId);
         setSelectedProduct(selectedProduct);
     };
-
+    // Xử lý render contract
+    const OnOpenContractView = ()=>{
+        if(!openContractView){
+            setOpenContractView(true)
+        }else{
+            setOpenContractView(false)
+        }
+        
+    }
     // Xử lý khi người dùng thêm sản phẩm
     const handleAddProduct = () => {
         if (selectedProduct) {
@@ -142,6 +169,7 @@ export const Quotation = () => {
     // Xử lý khi người dùng gửi báo giá 
     const handleSubmit = (e) => {
         e.preventDefault();
+        downloadPdf.current.click()
         getCustomerByUsername(userData.Username)
             .then(customer => {
                 const requestJson = {
@@ -197,7 +225,6 @@ export const Quotation = () => {
             }
         });
     };
-
 
     return (
         <div className='form'>
@@ -270,15 +297,33 @@ export const Quotation = () => {
                                     </div>
                                 )}
                                 <div className='col-3'>
-                                    <button type='submit'>Quotation</button>
+                                    <button type="button" onClick={OnOpenContractView}>View Contract PDF</button>
                                 </div>
+                                <div className='col-3'>
+                                    <button type="submit">Quotation</button>
+                                </div>
+                                <PDFDownloadLink document={<ExportPDF Data={selectedProductsList}/>} fileName='contract'>
+                                        <button type="button" ref={downloadPdf} hidden>dow</button>
+                                        </PDFDownloadLink>
                             </div>
-
-
                         </div>
                     </div>
                 )}
             </form>
+           
+                <Modal
+                open={openContractView}
+                onClose={OnOpenContractView}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description">
+                    <Box sx={style}>
+                                        <div style={{height:"700px", textAlign:"center"}}>
+                                        <PDFViewer style={{width: "1000px", height:"800px"}}><ExportPDF Data={selectedProductsList}/></PDFViewer>
+                                        </div>
+                    </Box>
+                </Modal>
+         
+      
         </div>
     );
 };

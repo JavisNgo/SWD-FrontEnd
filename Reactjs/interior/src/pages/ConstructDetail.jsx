@@ -46,7 +46,7 @@ export const ConstructDetail = () => {
         return <div className="col-lg-7 h-auto mb-30">
             <div className="h-100 bg-light p-30">
                 <h2>{construct.name}</h2>
-                <a className="breadcrumb-item text-dark" onClick={() => handleToContractorDetail()}>{contractor.name}</a>
+                <a className="" onClick={() => handleToContractorDetail()}>by: {contractor.name}</a>
                 <h5 className="font-weight-semi-bold mb-4">Expected price: {construct.estimatedPrice} VND</h5>
                 <p className="mb-4">{construct.description}</p>
                 <div className="d-flex pt-1">

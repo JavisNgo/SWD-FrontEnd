@@ -4,32 +4,32 @@ import { ResponsivePie } from "@nivo/pie"
 const PieChart = () => {
     const data = [
         {
-          "id": "elixir",
-          "label": "elixir",
+          "id": "Living room",
+          "label": "Living",
           "value": 394,
           "color": "hsl(163, 70%, 50%)"
         },
         {
-          "id": "lisp",
-          "label": "lisp",
+          "id": "Other",
+          "label": "Other",
           "value": 272,
           "color": "hsl(279, 70%, 50%)"
         },
         {
-          "id": "ruby",
-          "label": "ruby",
+          "id": "Dining room",
+          "label": "Dining",
           "value": 467,
           "color": "hsl(2, 70%, 50%)"
         },
         {
-          "id": "javascript",
-          "label": "javascript",
+          "id": "Office",
+          "label": "Office",
           "value": 291,
           "color": "hsl(314, 70%, 50%)"
         },
         {
-          "id": "rust",
-          "label": "rust",
+          "id": "Bedroom",
+          "label": "Bedroom",
           "value": 496,
           "color": "hsl(92, 70%, 50%)"
         }

@@ -4,6 +4,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import PieChart from "../Chart/PieChart.jsx";
 import BarChart from "../Chart/BarChart.jsx";
 import { Avatar, Box, Modal} from "@mui/material";
+import { useNavigate } from "react-router";
 
 
 const AdminIndex = () => {
@@ -19,6 +20,7 @@ const AdminIndex = () => {
   const [item, setItem] = useState();
   const [requestItem, setRequestItem] = useState();
   var inputImages = []
+  const navigate = useNavigate()
   const [actionMode, setActionMode] = useState("")
   const [Product, setProduct] = useState();
   const [handleModal, setHandleModal]=useState();
@@ -75,7 +77,10 @@ const AdminIndex = () => {
         [event.target.name]: event.target.value
       })
   }
-
+  const LogoutFunction = ()=>{
+    localStorage.clear()
+    navigate("/")
+}
   const OnFormChange = async (event) => {
     if (event.target.files) {
       for (let index = 0; index < event.target.files.length; index++) {
@@ -325,6 +330,10 @@ const AdminIndex = () => {
               >
                 <i className="fa fa-laptop me-2"></i>  Account
               </a>
+              <a href="#" className="nav-item nav-link active" 
+                            onClick={LogoutFunction} style={{ color: "white" }}>
+                            <i className="fa fa-table me-2" ></i>    Logout
+                        </a>
             </div>
           </div>
         </nav>

@@ -10,6 +10,7 @@ export const Signin = () => {
     const [password, setPassword] = useState()
     const [usernameError, setUsernameError] = useState('');
     const [passwordError, setPasswordError] = useState('');
+    
 
     const login = (username, password) => {
         axios.post('https://localhost:7233/api/v1/accounts/login', {
@@ -20,10 +21,18 @@ export const Signin = () => {
                 const decodedToken = jwtDecode(response.data.accessToken);
                 localStorage.setItem('userData', JSON.stringify(decodedToken));
 
-                const test = JSON.stringify(decodedToken)
-                console.log(test.Role);
-
-                navigate('/')
+                const test = JSON.parse(JSON.stringify(decodedToken))
+                console.log(test);
+                if(test.Role === "CUSTOMER"){
+                    navigate('/')
+                }
+                if(test.Role === "CONTRACTOR"){
+                    navigate('/ContractorIndex')
+                }
+                if(test.Role === "ADMIN"){
+                    navigate('/AdminIndex')
+                }
+                
             }
             )
             .catch(error => {

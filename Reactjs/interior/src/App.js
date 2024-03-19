@@ -16,20 +16,31 @@ import { Quotation } from './pages/Quotation.jsx';
 import { MyRequest } from './pages/MyRequest.jsx';
 import PrivateRoute from './pages/PrivateRoute.js';
 import { Unauthorized } from './pages/Unauthorized.jsx';
+import { useEffect, useState } from 'react';
 
 function App() {
   const userDataString = localStorage.getItem('userData');
-  const userData = JSON.parse(userDataString) || {
+  const [userData, setUserData] = useState({
     username: 'example_user',
     email: 'user@example.com',
-    role: '',
-  };
+    Role: '',
+  })
+
+  useEffect(()=>{
+    setUserData(JSON.parse(userDataString) || {
+      username: 'example_user',
+      email: 'user@example.com',
+      role: '',
+    })
+  })
+  
   return (
     <>
-      <Header />
+    {userData.Role === "CONTRACTOR"||userData.Role === "ADMIN" ? <></>:<><Header /></>}
       <Routes>
         <Route path='/' element={<HomePage />} />
-        <Route path='/ContratorIndex' element={<ContractorIndex/>}/>
+        {userData.Role === "CONTRACTOR"||userData.Role === "ADMIN" ? <><Route path='/ContractorIndex' element={<ContractorIndex/>}></Route></>
+        :<><Route path='/ContractorIndex' element={<HomePage/>}></Route></>}
         <Route path='/AdminIndex' element={<AdminIndex/>}></Route>
         <Route path='/Constructs' element={<Constructs />} />
         <Route path='/ConstructDetail' element={<ConstructDetail />} />
@@ -47,7 +58,8 @@ function App() {
         <Route path="/Unauthorized" element={<Unauthorized />} />
 
       </Routes>
-      <Footer />
+      {userData.Role === "CONTRACTOR" ||userData.Role === "ADMIN" ? <></>:<><Footer /></>}
+
     </>
 
   );
