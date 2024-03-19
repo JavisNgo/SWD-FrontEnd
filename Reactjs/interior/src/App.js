@@ -10,18 +10,23 @@ import { Constructs } from './pages/Constructs.jsx';
 import { Signin } from './pages/Signin.jsx';
 import { Error } from './pages/Error.jsx';
 import { ContractorDetail } from './pages/ContractorDetail.jsx';
-import { ImportImage } from './pages/ImportImage.jsx';
 import { ConstructDetail } from './pages/ConstructDetail.jsx';
 import { Signup } from './pages/Signup.jsx';
-import { Packages } from './pages/Packages.jsx';
 import { Quotation } from './pages/Quotation.jsx';
 import { MyRequest } from './pages/MyRequest.jsx';
-import { QuotationWithConstruct } from './pages/QuotationWithConstruct.jsx';
+import PrivateRoute from './pages/PrivateRoute.js';
+import { Unauthorized } from './pages/Unauthorized.jsx';
 
 function App() {
+  const userDataString = localStorage.getItem('userData');
+  const userData = JSON.parse(userDataString) || {
+    username: 'example_user',
+    email: 'user@example.com',
+    role: '',
+  };
   return (
     <>
-      {/* <Header /> */}
+      <Header />
       <Routes>
         <Route path='/' element={<HomePage />} />
         <Route path='/ContratorIndex' element={<ContractorIndex/>}/>
@@ -31,15 +36,18 @@ function App() {
         <Route path='/Signin' element={<Signin />} />
         <Route path='/Error' element={<Error />} />
         <Route path='/ContractorDetail' element={<ContractorDetail />} />
-        <Route path='/ImportImage' element={<ImportImage />} />
-        <Route path='/Signup' element={<Signup />}/>
-        <Route path='/Packages' element={<Packages />}/>
-        <Route path='/ImportImage' element={<ImportImage />}/>
-        <Route path='/Quotation' element={<Quotation />}/>
-        <Route path='/MyRequest' element={<MyRequest />}/>
-        <Route path='/QuotationWithConstruct' element={<QuotationWithConstruct />}/>
+        <Route path='/Signup' element={<Signup />} />
+        <Route exact path='/Quotation' element={<PrivateRoute role={'CUSTOMER'} />}>
+          <Route path='/Quotation' element={<Quotation />} />
+        </Route>
+        {/* <PrivateRoute path="/MyInfo" component={MyInfo} role={userData.Role} /> */}
+        <Route exact path='/MyRequest' element={<PrivateRoute role={'CUSTOMER'} />}>
+          <Route exact path='/MyRequest' element={<MyRequest />} />
+        </Route>
+        <Route path="/Unauthorized" element={<Unauthorized />} />
+
       </Routes>
-      {/* <Footer /> */}
+      <Footer />
     </>
 
   );

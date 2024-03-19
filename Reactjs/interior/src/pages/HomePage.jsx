@@ -53,8 +53,8 @@ export const HomePage = () => {
             <div className="col-lg-3 col-md-4 col-sm-6 pb-1" key={category.id}>
                 <a className="text-decoration-none" onClick={() => handleClickCategory(category.id)}>
                     <div className="cat-item d-flex align-items-center mb-4">
-                        <div className="overflow-hidden" style={{ width: 100, height: 100 }}>
-                            <img className="img-fluid" src={`img/categories/${category.name}.jpeg`} alt="Image" />
+                        <div className="overflow-hidden">
+                            <img className="img-fluid w-100" style={{ width: 100, height: 100 }} src={`img/categories/${category.name}.jpg`} alt="Image" />
                         </div>
                         <div className="flex-fill pl-3">
                             <h6>{category.name}</h6>
@@ -96,10 +96,10 @@ export const HomePage = () => {
             <div key={blog.id} className="col-lg-3 col-md-4 col-sm-6 pb-1">
                 <div className="product-item bg-light mb-4">
                     <div className="product-img position-relative overflow-hidden">
-                        <img className="img-fluid w-100" style={{ width: 290, height: 290 }} src={`img/blogs/blogs (${index+1}).jpg`} alt="Image" />
+                        <img className="img-fluid w-100" style={{ width: 290, height: 290 }} src={blog.blogImagesViews[0].imageUrl} alt="Image" />
                     </div>
-                    <div className="text-center py-4">
-                        <a className="h6 text-decoration-none text-truncate" href="#">{blog.title}</a>
+                    <div className="text-center py-3 row">
+                        <a className="h6 text-decoration-none col-12 text-truncate" href="#">{blog.title}</a>
                     </div>
                 </div>
             </div>
@@ -124,7 +124,7 @@ export const HomePage = () => {
                                         <img className="position-absolute w-100 h-100" src="img/carousel-1.jpg" style={{ objectFit: 'cover' }} />
                                         <div className="carousel-caption d-flex flex-column align-items-center justify-content-center">
                                             <div className="p-3" style={{ maxWidth: 700 }}>
-                                                <h1 className="display-4 text-white mb-3 animate__animated animate__fadeInDown">Professional</h1>
+                                                <h1 className="display-4 text-white mb-3 animate__animated animate__fadeInDown">Beautiful</h1>
                                                 <p className="mx-md-5 px-5 animate__animated animate__bounceIn">For Your Dream Project</p>
                                                 <a className="btn btn-outline-light py-2 px-4 mt-3 animate__animated animate__fadeInUp" href="#" onClick={() => { handleGetQuote() }}>Get quote</a>
                                             </div>

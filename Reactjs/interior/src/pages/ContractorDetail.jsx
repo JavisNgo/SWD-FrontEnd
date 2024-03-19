@@ -49,10 +49,11 @@ export const ContractorDetail = () => {
                     <div>
                       <p className="small text-muted mb-1">Address</p>
                       <p className="mb-0">{contractor.address}</p>
+                      <p className="small text-muted mt-1 mb-1">Phone Number</p>
+                      <p className="mb-0">{contractor.phoneNumber}</p>
                     </div>
                   </div>
                   <div className="d-flex pt-1">
-                    <button type="button" className="btn btn-outline-primary me-1 flex-grow-1">Chat</button>
                     <button type="button" className="btn btn-primary flex-grow-1">Quotation</button>
                   </div>
                 </div>

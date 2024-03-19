@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Signin } from '../Signin'
 import { getCategories } from '../../api/categories'
 
@@ -24,12 +24,22 @@ export const Header = () => {
 
     const renderCategories = () => {
         return categories.map(category => (
-            <a key={category.id} href="#" className="nav-item nav-link" onClick={() => handleClick(category.id)}>{category.name}</a>
+            <a key={category.id} className="nav-item nav-link" onClick={() => handleClick(category.id)}>{category.name}</a>
         ))
     }
     const handleClick = (categoryId) => {
         navigate('/Constructs', { state: { categoryId: categoryId } });
         setNavbarActive('Constructs')
+    }
+
+    const handleSignOut = () => {
+        try {
+            localStorage.removeItem("userData");
+            navigate('/')
+            alert('You sign out')
+        } catch {
+            navigate('/Error')
+        }
     }
 
     return (
@@ -42,25 +52,16 @@ export const Header = () => {
                             <span className="h1 text-uppercase text-dark bg-primary px-2 ml-n1">Interior</span>
                         </a>
                     </div>
-                    <div className="col-lg-4 col-6 text-left">
-                        <form action="">
-                            <div className="input-group">
-                                <input type="text" className="form-control" placeholder="Search for products" />
-                                <div className="input-group-append">
-                                    <span className="input-group-text bg-transparent text-primary">
-                                        <i className="fa fa-search" />
-                                    </span>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div className="col-lg-4 col-6 text-right">
+
+                    <div className="col-lg-8 col-6 text-right">
                         <div className="btn-group">
                             <button type="button" className="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown">My
                                 Account</button>
-                            {userData ? (
+                            {userData && userData.Role === 'CUSTOMER' ? (
                                 <div className="dropdown-menu dropdown-menu-right">
                                     <Link to="/MyInfo" className="dropdown-item" type="button">My info</Link>
+                                    <Link to="/MyRequest" className="dropdown-item" type="button">My request</Link>
+                                    <a class="dropdown-item" onClick={handleSignOut}>Sign Out</a>
                                 </div>
                             ) : (
                                 <div className="dropdown-menu dropdown-menu-right">
@@ -74,19 +75,7 @@ export const Header = () => {
             </div>
             <div className="container-fluid bg-dark mb-30">
                 <div className="row px-xl-5">
-                    <div className="col-lg-3 d-none d-lg-block">
-                        <a className="btn d-flex align-items-center justify-content-between bg-primary w-100" data-toggle="collapse" href="#navbar-vertical" style={{ height: 65, padding: '0 30px' }}>
-                            <h6 className="text-dark m-0"><i className="fa fa-bars mr-2" />Categories</h6>
-                            <i className="fa fa-angle-down text-dark" />
-                        </a>
-                        <nav className="collapse position-absolute navbar navbar-vertical navbar-light align-items-start p-0 bg-light" id="navbar-vertical" style={{ width: 'calc(100% - 30px)', zIndex: 999 }}>
-                            <div className="navbar-nav w-100">
-                                {/**Render categories */}
-                                {renderCategories()}
-                            </div>
-                        </nav>
-                    </div>
-                    <div className="col-lg-9">
+                    <div className="col-lg-12">
                         <nav className="navbar navbar-expand-lg bg-dark navbar-dark py-3 py-lg-0 px-0">
                             <Link to="/" className="text-decoration-none d-block d-lg-none">
                                 <span className="h1 text-uppercase text-dark bg-light px-2">Multi</span>
@@ -97,18 +86,21 @@ export const Header = () => {
                             </button>
                             <div className="collapse navbar-collapse justify-content-between" id="navbarCollapse">
                                 <div className="navbar-nav mr-auto py-0">
-                                    <Link to="/" className={navbarActive === 'Home' ? "nav-item nav-link active" : "nav-item nav-link"} onClick={(e) => setNavbarActive(e.target.innerText)}>Home</Link>
-                                    <Link to="/Constructs" className={navbarActive === 'Constructs' ? "nav-item nav-link active" : "nav-item nav-link"} onClick={(e) => setNavbarActive(e.target.innerText)}>Constructs</Link>
-                                    <a href="checkout.html" className="nav-item nav-link">Checkout</a>
-                                    <a href="contact.html" className="nav-item nav-link">Contact</a>
-                                    <div className="nav-item dropdown">
-                                        <a href="#" className="nav-link dropdown-toggle" data-toggle="dropdown">Pages <i className="fa fa-angle-down mt-1"></i></a>
-                                        <div className="dropdown-menu bg-primary rounded-0 border-0 m-0">
-                                            <Link to="/ContractorDetail" className="dropdown-item">Contractor Detail</Link>
-                                            <Link to="/ConstructDetail" className="dropdown-item">Construct Detail</Link>
-
-                                        </div>
-                                    </div>
+                                    <Link to="/" className={navbarActive === 'Home' ? "nav-item nav-link active" : "nav-item nav-link"}
+                                        onClick={(e) => setNavbarActive(e.target.innerText)}>Home
+                                    </Link>
+                                    <Link to="/Constructs" className={navbarActive === 'Constructs' ? "nav-item nav-link active" : "nav-item nav-link"}
+                                        onClick={(e) => setNavbarActive(e.target.innerText)}>Constructs
+                                    </Link>
+                                    {renderCategories()}
+                                </div>
+                            </div>
+                            <div className="input-group py-3 py-lg-0 px-0" style={{ width: 400 }}>
+                                <input type="text" className="form-control" placeholder="Search for products" />
+                                <div className="input-group-append">
+                                    <span className="input-group-text bg-transparent text-primary">
+                                        <i className="fa fa-search" />
+                                    </span>
                                 </div>
                             </div>
                         </nav>

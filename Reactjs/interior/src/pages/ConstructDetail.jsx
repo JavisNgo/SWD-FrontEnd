@@ -7,6 +7,7 @@ export const ConstructDetail = () => {
     const [construct, setConstruct] = useState({})
     const [products, setProducts] = useState([])
     const [contractor, setContractor] = useState({})
+    const [isState, setIsState] = useState(false)
     let contractorId = useRef()
 
     let navigate = useNavigate()
@@ -24,6 +25,7 @@ export const ConstructDetail = () => {
                 setConstruct(data)
                 setProducts(data.constructProductsViews)
                 contractorId.current = data.contractorId
+                setIsState(true)
             })
             .catch(error => {
                 console.log(error);
@@ -45,7 +47,7 @@ export const ConstructDetail = () => {
             <div className="h-100 bg-light p-30">
                 <h2>{construct.name}</h2>
                 <a className="breadcrumb-item text-dark" onClick={() => handleToContractorDetail()}>{contractor.name}</a>
-                <h5 className="font-weight-semi-bold mb-4">Expected price: ${construct.estimatedPrice}</h5>
+                <h5 className="font-weight-semi-bold mb-4">Expected price: {construct.estimatedPrice} VND</h5>
                 <p className="mb-4">{construct.description}</p>
                 <div className="d-flex pt-1">
                     <button type="button" className="btn btn-primary" onClick={() => handleToQuotation()}>Quotation</button>
@@ -55,10 +57,10 @@ export const ConstructDetail = () => {
     }
 
     const handleToQuotation = () => {
-        navigate('/QuotationWithConstruct', {
+        navigate('/Quotation', {
             state: {
                 construct: construct,
-                contractorId: contractor.id
+                contractor: contractor
             }
         })
     }
@@ -71,16 +73,16 @@ export const ConstructDetail = () => {
                         <div className="col-3">
                             <ul className="list-group list-group-flush">
                                 <li className="list-group-item">
-                                    <img className='img-fluid img-thumbnail' style={{ width: 200, height: 200 }} src={`img/products/product-${product.productId}.jpg`} />
+                                    <img className='img-fluid img-thumbnail' style={{ width: 200, height: 200 }} src={product.productsView.productImagesViews[0].imageUrl} />
                                 </li>
                             </ul>
                         </div>
                         <div className="col-9">
                             <ul className="list-group list-group-flush">
                                 <li className="list-group-item">
-                                    <h4>{product.productsView.name}</h4>
-                                    <h5>{product.productsView.description}</h5>
-                                    <p>${product.productsView.price}</p>
+                                    <h3 className='font-weight-bold p-2'>{product.productsView.name}</h3>
+                                    <h5 className='font-weight-normal p-2'>{product.productsView.description}</h5>
+                                    <p className='p-2'>{product.productsView.price} VND</p>
                                 </li>
                             </ul>
                         </div>
@@ -98,20 +100,20 @@ export const ConstructDetail = () => {
                     <div className="col-md-6">
                         <ul className="list-group list-group-flush">
                             <li className="list-group-item">
-                                <img className='img-fluid img-thumbnail' src={`img/constructs/construct${construct.id} (1).jpg`} />
+                                <img className='img-fluid img-thumbnail' src={isState && construct.constructImagesViews[0].imageUrl} />
                             </li>
                             <li className="list-group-item">
-                                <img className='img-fluid img-thumbnail' src={`img/constructs/construct${construct.id} (2).jpg`} />
+                                <img className='img-fluid img-thumbnail' src={isState && construct.constructImagesViews[0].imageUrl} />
                             </li>
                         </ul>
                     </div>
                     <div className="col-md-6">
                         <ul className="list-group list-group-flush">
                             <li className="list-group-item">
-                                <img className='img-fluid img-thumbnail' src={`img/constructs/construct${construct.id} (3).jpg`} />
+                                <img className='img-fluid img-thumbnail' src={isState && construct.constructImagesViews[0].imageUrl} />
                             </li>
                             <li className="list-group-item">
-                                <img className='img-fluid img-thumbnail' src={`img/constructs/construct${construct.id} (4).jpg`} />
+                                <img className='img-fluid img-thumbnail' src={isState && construct.constructImagesViews[0].imageUrl} />
                             </li>
                         </ul>
                     </div>
@@ -166,8 +168,8 @@ export const ConstructDetail = () => {
                 <div className="row px-xl-5">
                     <div className="col-12">
                         <nav className="breadcrumb bg-light mb-30">
-                            <a className="breadcrumb-item text-dark" href="#">Home</a>
-                            <a className="breadcrumb-item text-dark" href="#">Constructs</a>
+                            <a className="breadcrumb-item text-dark" href="#" onClick={() => {navigate('/')}}>Home</a>
+                            <a className="breadcrumb-item text-dark" href="#" onClick={() => {navigate('/Constructs')}}>Constructs</a>
                             <span className="breadcrumb-item active">Construct Detail</span>
                         </nav>
                     </div>
@@ -179,16 +181,16 @@ export const ConstructDetail = () => {
                         <div id="product-carousel" className="carousel slide" data-ride="carousel">
                             <div className="carousel-inner bg-light">
                                 <div className="carousel-item active">
-                                    <img className="w-100 h-100" style={{ width: 100, height: 100 }} src={`img/constructs/construct${construct.id} (1).jpg`} alt="Image" />
+                                    <img className="w-100 h-100" style={{ width: 100, height: 100 }} src={isState && construct.constructImagesViews[0].imageUrl} alt="Image" />
                                 </div>
                                 <div className="carousel-item">
-                                    <img className="w-100 h-100" style={{ width: 100, height: 100 }} src={`img/constructs/construct${construct.id} (2).jpg`} alt="Image" />
+                                    <img className="w-100 h-100" style={{ width: 100, height: 100 }} src={isState && construct.constructImagesViews[0].imageUrl} alt="Image" />
                                 </div>
                                 <div className="carousel-item">
-                                    <img className="w-100 h-100" style={{ width: 100, height: 100 }} src={`img/constructs/construct${construct.id} (3).jpg`} alt="Image" />
+                                    <img className="w-100 h-100" style={{ width: 100, height: 100 }} src={isState && construct.constructImagesViews[0].imageUrl} alt="Image" />
                                 </div>
                                 <div className="carousel-item">
-                                    <img className="w-100 h-100" style={{ width: 100, height: 100 }} src={`img/constructs/construct${construct.id} (4).jpg`} alt="Image" />
+                                    <img className="w-100 h-100" style={{ width: 100, height: 100 }} src={isState && construct.constructImagesViews[0].imageUrl} alt="Image" />
                                 </div>
                             </div>
                             <a className="carousel-control-prev" href="#product-carousel" data-slide="prev">
@@ -208,14 +210,12 @@ export const ConstructDetail = () => {
                             <div className="nav nav-tabs mb-4">
                                 <a className="nav-item nav-link text-dark active" data-toggle="tab" href="#tab-pane-1">Products List</a>
                                 <a className="nav-item nav-link text-dark" data-toggle="tab" href="#tab-pane-2">Construct Images</a>
-                                <a className="nav-item nav-link text-dark" data-toggle="tab" href="#tab-pane-3">Reviews (0)</a>
                             </div>
                             <div className="tab-content">
                                 <TabPane1 />
 
                                 <TabPane2 />
 
-                                <TabPane3 />
                             </div>
                         </div>
                     </div>

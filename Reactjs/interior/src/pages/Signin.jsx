@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { Link, useNavigate } from 'react-router-dom'
+import { jwtDecode } from "jwt-decode";
 
 export const Signin = () => {
     let navigate = useNavigate()
@@ -10,15 +11,18 @@ export const Signin = () => {
     const [usernameError, setUsernameError] = useState('');
     const [passwordError, setPasswordError] = useState('');
 
-    console.log(password);
-
     const login = (username, password) => {
         axios.post('https://localhost:7233/api/v1/accounts/login', {
             username: username,
             password: password,
         })
             .then(response => {
-                localStorage.setItem('userData', JSON.stringify(response.data));
+                const decodedToken = jwtDecode(response.data.accessToken);
+                localStorage.setItem('userData', JSON.stringify(decodedToken));
+
+                const test = JSON.stringify(decodedToken)
+                console.log(test.Role);
+
                 navigate('/')
             }
             )
